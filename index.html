@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Rubik's Cube Solver</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+            min-height: 100vh;
+        }
+
+        .cube-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .controls-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            background: rgba(108, 99, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(108, 99, 255, 0.1);
+        }
+
+        .control-group h3 {
+            color: #6c63ff;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .button-grid.wide {
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .cube-btn, .action-btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cube-btn {
+            background: linear-gradient(45deg, #6c63ff, #5a54d6);
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
+        }
+
+        .cube-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        .cube-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+            padding: 18px 24px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 55px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .action-btn.primary:hover {
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        .input-group input, .input-group select {
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .textarea-container {
+            margin-top: 20px;
+        }
+
+        #outputinput {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        #outputinput:focus {
+            outline: none;
+            border-color: #6c63ff;
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        #erroroutput {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            color: #c0392b;
+            font-weight: 500;
+            min-height: 20px;
+            white-space: pre-line;
+        }
+
+        .help-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .help-link a {
+            color: #6c63ff;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .help-link a:hover {
+            color: #5a54d6;
+            transform: translateY(-1px);
+        }
+
+        .keyboard-hint {
+            background: rgba(108, 99, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+            border: 1px solid rgba(108, 99, 255, 0.1);
+        }
+
+        .keyboard-hint strong {
+            color: #6c63ff;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .button-grid.wide {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        canvas {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin: 20px 0;
+            border: 3px solid rgba(108, 99, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        canvas:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(78, 205, 196, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transform: translateX(200px);
+            transition: all 0.3s ease;
+        }
+
+        .status-indicator.show {
+            transform: translateX(0);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .cube-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .cube-btn:hover::before {
+            left: 100%;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-indicator" id="statusIndicator">
+        <i class="fas fa-check"></i> Ready
+    </div>
+
+    <div class="container fade-in">
+        <div class="cube-section">
+            <h1><i class="fas fa-cube"></i> Rubik's Cube Solver</h1>
+            <!-- Canvas will be inserted here by JavaScript -->
+            
+            <div class="control-group" style="width: 100%; margin-top: 20px;">
+                <h3><i class="fas fa-terminal"></i> Move Sequence</h3>
+                <div id="erroroutput"></div>
+                <div class="textarea-container">
+                    <textarea id="outputinput" placeholder="Move sequence will appear here... You can also type moves manually."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-section">
+            <div class="control-group">
+                <h3><i class="fas fa-magic"></i> Actions</h3>
+                <div class="action-grid" id="specialbtncontainer"></div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-rotate"></i> Basic Rotations</h3>
+                <div class="button-grid wide" id="rotbtncontainer"></div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-undo"></i> Inverse Rotations</h3>
+                <div class="button-grid wide" id="invrotbtncontainer"></div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-repeat"></i> Double Rotations</h3>
+                <div class="button-grid wide" id="doublerotbtncontainer"></div>
+            </div>
+
+            <div class="control-group">
+                <h3><i class="fas fa-cog"></i> Settings</h3>
+                <div class="input-group">
+                    <label for="seedvalue"><i class="fas fa-dice"></i> RNG Seed Value</label>
+                    <input value="0" type="number" id="seedvalue">
+                </div>
+                <div class="input-group">
+                    <label for="perspectiveSelect"><i class="fas fa-eye"></i> View Perspective</label>
+                    <select id="perspectiveSelect">
+                        <option value="F">Front (F)</option>
+                        <option value="B">Back (B)</option>
+                        <option value="R">Right (R)</option>
+                        <option value="L">Left (L)</option>
+                        <option value="U">Up (U)</option>
+                        <option value="D">Down (D)</option>
+                        <option value="I">Isometric (I)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="keyboard-hint">
+                <strong>Keyboard Shortcuts:</strong> Use F, R, U, L, D, B keys for quick rotations when not typing in the text area.
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- <textarea id="actionpanel"></textarea> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/quaternion@1.2.1/quaternion.js"></script>
+    <script src="package.js"></script>
+</body>
+</html>

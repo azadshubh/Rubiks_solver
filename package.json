@@ -1,0 +1,16 @@
+{
+  "name": "rubikscubesolver",
+  "version": "1.0.0",
+  "description": "A Rubik's Cube solver implemented in JavaScript",
+  "main": "package.js",
+  "dependencies": {
+    "express": "*"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "powershell -Command \"Get-Content libs\\vector\\*.js, libs\\utils\\*.js, libs\\rect\\*.js, libs\\event\\*.js, libs\\networking\\*.js, pathfind.js, cube.js, main.js | Out-File -Encoding UTF8 package.js\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
